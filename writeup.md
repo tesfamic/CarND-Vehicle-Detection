@@ -61,8 +61,8 @@ The goals / steps of this project are the following:
 >
  |orientation   |  pix_per_cell  | cells_per_block  |training accuracy| training time |
  |:------------:|:--------------:|:----------------:|:---------------:|:-------------:|
- |   8          |   8            |  2               | 98.98           | 16.93 s       |
- |   9          |   8            |  2               | 98.86           | 17.35 s       |
+ |   9          |   8            |  2               | 98.98           | 16.93 s       |
+ |   8          |   8            |  2               | 98.86           | 17.35 s       |
  |   8          |  16            |  2               | 97.99           |  7.96 s       |
  |   5          |  16            |  2               | 97.98           | 8.53 s        |
  |   5          |   8            |  2               | 98.83           | 13.75 s       |
@@ -81,14 +81,14 @@ The goals / steps of this project are the following:
 
 #### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-> The classifier I used is linear SVM and the feature vector contains concatenated spatially binned color feature, color histogram and HOG feature. All of those feature vectors are stacked and normalized using the 'StandardScalar' function from sklearn. Then, the normalized data is shuffled and divided in to training (80%) and testing(20%) sets using sklearn's 'train_test_split()' function. Finally, the 'linearSVC()' classifier is trained, tested, and saved in pickle form. This process can be found in cell #5 of the jupyter notebook (vehicle_detection.ipynb).
+> The classifier I used is linear SVM and the feature vector contains concatenated spatially binned color feature, histogram of colors and HOG features. All of those feature vectors are stacked and normalized using the `StandardScalar` function from sklearn. Then, the normalized data is shuffled and divided in to training (80%) and testing(20%) sets using sklearn's `train_test_split()` function. Finally, the `linearSVC()` classifier is trained, tested, and saved in pickle form. This process can be found in cell #5 of the jupyter notebook (vehicle_detection.ipynb).
 
 
 ### Sliding Window Search
 
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-> I tried the sliding window approach first with window sizes of 64x64, 96x96 and 128x128 and 50% window overlapping. It has reasonable performance. However, the amount of time it takes to make a single prediction is large. Therefore, I adopted the sub-sampling window search, as presented in the course material, which performs better in terms of classification accuracy and speed. I chose four scales to cover wide range of distances from the camera. To catch cars far from the camera, a scale of 0.5 is choosen (32x32 window) and for the closer cars a scale of 2.0 (128x128) is chosen. Two more scales 1.0 (64x64, 96x96) are used to accomodate cars in various ranges from the camera position. The search windows are shown below. 
+> I tried the sliding window approach first with window sizes of 64x64, 96x96 and 128x128 and 50% window overlapping. It has reasonable performance. However, the amount of time it takes to make a single prediction is large. Therefore, I adopted the sub-sampling window search, as presented in the course material, which performs better in terms of classification accuracy and speed. I chose four scales to cover wide range of distances from the camera. To catch cars far from the camera, a scale of 0.5 is choosen (32x32 window) and for the closer cars a scale of 2.0 (128x128) is chosen. Two more scales 1.0 (64x64) and 1.5 (96x96) are used to accomodate cars in various ranges from the camera position. The search windows are shown below. 
 Scales:  [0.5, 1, 1.5, 2.0], ystart = [400, 400, 400, 400], ystop = [480, 600, 680, 680]
 
 
@@ -96,11 +96,11 @@ Scales:  [0.5, 1, 1.5, 2.0], ystart = [400, 400, 400, 400], ystop = [480, 600, 6
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-> Ultimately I searched on four scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
+> Ultimately I searched on four scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result. The reason that I used four scales is to improve detection accuracy at the cost of prediction speed per image frame. Here are some example images:
+
 ![alt text][result_0]
 ![alt text][result_1]
 ![alt text][result_2]
-
 
 ---
 
@@ -108,16 +108,16 @@ Scales:  [0.5, 1, 1.5, 2.0], ystart = [400, 400, 400, 400], ystop = [480, 600, 6
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
 
-> Here's a [project_video_out](./video_out.avi). In this video there are about 6 false positives and few misses.
+> Here's a [project_video_out](./output_video.avi). In this video there are about 6 false positives and few misses.
 
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-> I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap. I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
+> I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap. I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected. The code blocks can be found in the `common_functions.py` file starting from line #38. The functions are called (used) in the `extraction_functions.py` file, `predict_vehicle()` function line #166. A threshold of 5 counts is used to minimize false positives. 
 
 > Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
 
-### Here are five frames and their corresponding heatmaps:
+#### Here are five frames and their corresponding heatmaps:
 > 
   ![alt text][frame_heatmap_1]
   ![alt text][frame_heatmap_2]
@@ -126,9 +126,8 @@ Scales:  [0.5, 1, 1.5, 2.0], ystart = [400, 400, 400, 400], ystop = [480, 600, 6
   ![alt text][frame_heatmap_5]
 
 
-### Here the resulting bounding boxes are drawn onto one of the frames in the series:
+#### Here the resulting bounding boxes are drawn onto one of the frames in the series:
 > ![alt text][heatmap_bbox_5]
-
 
 ---
 
@@ -138,5 +137,5 @@ Scales:  [0.5, 1, 1.5, 2.0], ystart = [400, 400, 400, 400], ystop = [480, 600, 6
 
 > When multiple scales of smaller window are chosen, the number of search windows increase. As a result, the prediction accuracy gets better. However, the time to predict for a single image frame gets larger. With one or two scales, the number of search windows is lower. As a result, I got high number of false positives with faster prediction time. That is one of the issues. In addition, the pipeline sometimes fails to detect the car when the car in the image appear somehow far from the camera. Further, there are false detections when the image contains some shadow and metal barriers.
 
-> To make the pipeline robust, one option is to use additional feature vectors and by using tracking system, as presented in the course material.
+> Using additional features and some form of tracking system, as presented in the course material, could make the detection more robust.
 
