@@ -5,7 +5,7 @@ import time
 from skimage.feature import hog
 from scipy.ndimage.measurements import label
 from common_functions import *
-# Define a function to return HOG features and visualization
+# A function to return HOG features and visualization
 def get_hog_features(img, orient, pix_per_cell, cell_per_block, vis=False, feature_vec=True):
     # Call with two outputs if vis==True
     if vis == True:
@@ -20,8 +20,8 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block, vis=False, featu
                        transform_sqrt=True, visualise=vis, feature_vector=feature_vec)
         return features
 
-# Define a function to extract features from a list of images
-# this function calls bin_spatial() and color_hist()
+# A function to extract features from a list of images
+# this function calls single_img_features() function
 def extract_features(imgs, color_space='RGB', spatial_size=(32, 32), hist_bins=32, orient=9, 
                      pix_per_cell=8, cell_per_block=2, hog_channel=0):
     # Create a list to append feature vectors to
@@ -55,10 +55,12 @@ def single_img_features(image, color_space='RGB', spatial_size=(32, 32), hist_bi
                                         pix_per_cell, cell_per_block, vis=False, feature_vec=False)
         hog_features = np.ravel(hog_features)
 
+    # Get the spatial binned features
     spatial_features = bin_spatial(feature_image, size=spatial_size)
+    # Get the color histograms
     hist_features = color_hist(feature_image, nbins=hist_bins)
-
-    features= np.concatenate((hog_features,hist_features,spatial_features))#,spatial_features)))
+    # Put all features together
+    features= np.concatenate((hog_features,hist_features,spatial_features))
 
     return features
 
@@ -69,8 +71,8 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, color_space,orient, pix_
    
     draw_img = np.copy(img)
     
-    window_list =[]
-    all_windows = []
+    window_list =[] # list to collect bounding box coordinates with positive prediction
+    all_windows = [] # a list to collect all searching windows/boxes
     
     img_tosearch = img[ystart:ystop, :, :]
     ctrans_tosearch = convert_color(img_tosearch, conv=color_space)
@@ -116,7 +118,7 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, color_space,orient, pix_
             ytop_draw = np.int(ytop * scale)
             win_draw = np.int(window * scale)
             
-            # Collect all the boxes
+            # Collect all the search windows/boxes
             all_windows.append(((xbox_left, ytop_draw + ystart), (xbox_left + win_draw, ytop_draw + win_draw + ystart)))
             
             # Extract the image patch
@@ -131,7 +133,7 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, color_space,orient, pix_
             # test_features = X_scaler.transform(np.hstack((shape_feat, hist_feat,,spatial_features)).reshape(1, -1))
             test_prediction = svc.predict(test_features)
 
-            if test_prediction == 1:
+            if test_prediction == 1: 
                 window_list.append(((xbox_left, ytop_draw + ystart), (xbox_left + win_draw, ytop_draw + win_draw + ystart)))
                 
     return window_list,all_windows
@@ -173,26 +175,3 @@ def predict_vehicle(img, svc, X_scalar, scales, ystart, ystop, color_space,
     
     return final_img, bbox_img, heat_img,heatmap, all_windows
 
-# Define list of windows to be searched (output of slide_windows())
-# def search_windows(img, windows, svc, scaler, color_space='RGB', spatial_size=(32, 32), hist_bins=32, 
-#                      orient=9, pix_per_cell=8, cell_per_block=2, hog_channel=0):
-
-#     #1) Create an empty list to receive positive detection windows
-#     on_windows = []
-#     #2) Iterate over all windows in the list
-#     for window in windows:
-#         #3) Extract the test window from original image
-#         test_img = cv2.resize(img[window[0][1]:window[1][1], window[0][0]:window[1][0]], (64, 64))      
-#         #4) Extract features for that window using single_img_features()
-#         features = single_img_features(test_img, color_space, spatial_size,hist_bins, orient, pix_per_cell, 
-#                                         cell_per_block,hog_channel)
-        
-#         #5) Scale extracted features to be fed to classifier
-#         test_features = scaler.transform(np.array(features).reshape(1, -1))
-#         #6) Predict using your classifier
-#         prediction = svc.predict(test_features)
-#         #7) If positive (prediction == 1) then save the window
-#         if prediction == 1:
-#             on_windows.append(window)
-#     #8) Return windows for positive detections
-#     return on_windows
